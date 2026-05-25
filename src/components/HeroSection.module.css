@@ -1,0 +1,205 @@
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  padding: 80px 24px 60px;
+}
+
+/* Grid background */
+.gridBg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(124, 58, 237, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 58, 237, 0.06) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+}
+
+.content {
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 28px;
+}
+
+/* Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--purple-bright);
+  background: rgba(124, 58, 237, 0.1);
+  border: 1px solid var(--border-active);
+  padding: 6px 16px;
+  border-radius: 99px;
+}
+
+.badgeDot {
+  width: 8px;
+  height: 8px;
+  background: var(--purple-glow);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--purple-glow);
+  animation: pulse 2s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.7); }
+}
+
+/* Title */
+.title {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  line-height: 1.05;
+}
+
+.titleLine1 {
+  font-family: var(--font-display);
+  font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+  font-weight: 400;
+  color: var(--text-secondary);
+  letter-spacing: 0.3em;
+}
+
+.titleLine2 {
+  font-family: var(--font-display);
+  font-size: clamp(3.5rem, 9vw, 7rem);
+  font-weight: 900;
+  color: var(--text-primary);
+  text-shadow: 0 0 60px rgba(168, 85, 247, 0.35);
+  letter-spacing: 0.05em;
+}
+
+.titleLine2 em {
+  font-style: normal;
+  color: var(--purple-glow);
+  text-shadow: 0 0 30px var(--purple-glow), 0 0 80px rgba(168, 85, 247, 0.5);
+}
+
+.titleLine3 {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.15em;
+}
+
+/* Subtitle */
+.subtitle {
+  font-size: clamp(0.9rem, 1.5vw, 1.05rem);
+  color: var(--text-secondary);
+  line-height: 1.7;
+  max-width: 560px;
+}
+
+/* CTA */
+.cta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.ctaPrimary {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: white;
+  background: linear-gradient(135deg, var(--purple-core), var(--purple-glow));
+  border: none;
+  padding: 13px 32px;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 0 30px rgba(168, 85, 247, 0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.ctaPrimary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 40px rgba(168, 85, 247, 0.6);
+}
+
+.ctaSecondary {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--purple-bright);
+  background: transparent;
+  border: 1px solid var(--border-active);
+  padding: 13px 32px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.ctaSecondary:hover {
+  background: rgba(124, 58, 237, 0.12);
+  box-shadow: var(--glow-sm);
+}
+
+/* Stats */
+.stats {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(13, 13, 26, 0.8);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 24px 40px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0 40px;
+}
+
+.statIcon {
+  font-size: 1.3rem;
+  margin-bottom: 2px;
+}
+
+.statValue {
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 3vw, 1.9rem);
+  font-weight: 700;
+  color: var(--purple-bright);
+  text-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+}
+
+.statLabel {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.statDivider {
+  width: 1px;
+  height: 50px;
+  background: var(--border-subtle);
+  flex-shrink: 0;
+}

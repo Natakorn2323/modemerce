@@ -1,0 +1,92 @@
+/* ============================================================
+   ModVault — globals.css
+   วาง file นี้ที่ app/globals.css (หรือ src/app/globals.css)
+   ============================================================ */
+ 
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+ 
+/* ── Reset ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+ 
+/* ── CSS Variables ── */
+:root {
+  /* Purple palette */
+  --purple-dim:    #1a0a3c;
+  --purple-mid:    #3b1a7a;
+  --purple-core:   #7c3aed;
+  --purple-glow:   #a855f7;
+  --purple-bright: #c084fc;
+  --purple-pale:   #e9d5ff;
+ 
+  /* Backgrounds */
+  --bg-base:       #06060f;
+  --bg-surface:    #0d0d1a;
+  --bg-card:       #111126;
+  --bg-card-hover: #16162e;
+ 
+  /* Text */
+  --text-primary:   #ffffff;
+  --text-secondary: #a5a3ae;
+  --text-muted:     #5a5478;
+ 
+  /* Borders */
+  --border-subtle: rgba(124, 58, 237, 0.18);
+  --border-active: rgba(168, 85, 247, 0.45);
+ 
+  /* Glows */
+  --glow-sm: 0 0 12px rgba(168, 85, 247, 0.3);
+  --glow-md: 0 0 24px rgba(168, 85, 247, 0.4), 0 0 48px rgba(124, 58, 237, 0.2);
+  --glow-lg: 0 0 40px rgba(168, 85, 247, 0.5), 0 0 80px rgba(124, 58, 237, 0.3);
+ 
+  /* Fonts */
+  --font-display: 'Orbitron', monospace;
+  --font-heading: 'Rajdhani', sans-serif;
+  --font-body:    'Inter', sans-serif;
+}
+ 
+/* ── Base ── */
+html {
+  scroll-behavior: smooth;
+}
+ 
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+ 
+/* Ambient background blob */
+.bg-ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 20%,  rgba(124, 58, 237, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 80% 70%,  rgba(168, 85, 247, 0.09) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 50% 100%, rgba(76,  29, 149, 0.15) 0%, transparent 60%);
+}
+ 
+/* ── Shared section title ── */
+.section-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.3rem, 3vw, 1.8rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.04em;
+}
+ 
+/* ── Scrollbar ── */
+::-webkit-scrollbar              { width: 6px; }
+::-webkit-scrollbar-track        { background: var(--bg-base); }
+::-webkit-scrollbar-thumb        { background: var(--purple-mid); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover  { background: var(--purple-core); }
+ 
