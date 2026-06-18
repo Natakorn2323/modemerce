@@ -8,26 +8,23 @@ const supabaseAdmin = createClient(
 
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const { data, error } = await supabaseAdmin
-      .from('orders')
-      .select('status, paid_at, mod_id')
-      .eq('id', params.id)
-      .single()
+  const { id } = await params  // ← เพิ่ม await
 
-    if (error || !data) {
-      return NextResponse.json({ status: 'pending' })
-    }
+  const { data, error } = await supabaseAdmin
+    .from('orders')
+    .select('status, paid_at, mod_id')
+    .eq('id', id)
+    .single()
 
-    return NextResponse.json({
-      status:  data.status,
-      paid_at: data.paid_at,
-      mod_id:  data.mod_id,
-    })
-
-  } catch {
+  if (error || !data) {
     return NextResponse.json({ status: 'pending' })
   }
+
+  return NextResponse.json({
+    status:  data.status,
+    paid_at: data.paid_at,
+    mod_id:  data.mod_id,
+  })
 }

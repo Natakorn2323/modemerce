@@ -8,34 +8,29 @@ const supabaseAdmin = createClient(
 
 export async function POST(
   _req: Request,
-  { params }: { params: { id: string } }
-) {
-  try {
-    // อัปเดต order
-    const { data: order, error } = await supabaseAdmin
-      .from('orders')
-      .update({
-        status:  'paid',
-        paid_at: new Date().toISOString(),
-      })
-      .eq('id', params.id)
-      .select('mod_id')
-      .single()
+  {params}: {params: Promise<{id: string}> }
+){
+  const {id} = await params 
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
+  const {data: order,error}= await supabaseAdmin
+    .from('orders')
+    .update({
+      status: 'paid',
+      paid_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .select('mod_id')
+    .single()
 
-    // เพิ่ม download count
-    if (order?.mod_id) {
-      await supabaseAdmin.rpc('increment_downloads', {
-        mod_id: order.mod_id,
-      })
-    }
-
-    return NextResponse.json({ success: true })
-
-  } catch (err) {
-    return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 })
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
+  if (order?.mod_id) {
+    await supabaseAdmin.rpc('increment_downloads', {
+      mod_id: order.mod_id,
+    
+    })
+ }
+
+  return NextResponse.json({ success: true })
 }
