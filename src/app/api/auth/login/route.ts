@@ -48,6 +48,7 @@ export async function POST(req: Request) {
         username:    profile?.username,
         role:        profile?.role,
         token:       data.session?.access_token,
+        refreshToken: data.session?.refresh_token,
       },
     })
 

@@ -25,6 +25,14 @@
   gap: 10px;
   text-decoration: none;
   flex-shrink: 0;
+  border-radius: 6px;
+  padding: 2px 4px;
+  transition: background 0.2s;
+}
+
+.logo:focus-visible {
+  outline: 2px solid var(--purple-glow);
+  outline-offset: 2px;
 }
 
 .logoIcon {
@@ -79,6 +87,19 @@
   background: rgba(124, 58, 237, 0.1);
 }
 
+.navLink:focus-visible,
+.navBtn:focus-visible {
+  outline: 2px solid var(--purple-glow);
+  outline-offset: 2px;
+  color: var(--purple-bright);
+  background: rgba(124, 58, 237, 0.1);
+}
+
+.navLink:active,
+.navBtn:active {
+  background: rgba(124, 58, 237, 0.15);
+}
+
 .hotBadge {
   font-size: 0.9rem;
 }
@@ -104,6 +125,12 @@
 @keyframes dropIn {
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropMenu {
+    animation: none;
+  }
 }
 
 .dropHeader {
@@ -169,6 +196,20 @@
   border-radius: 4px;
 }
 
+.userDisplay {
+  font-size: 0.85rem;
+  color: var(--purple-bright);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sellerBadge {
+  font-size: 0.7rem;
+  color: var(--purple-glow);
+}
+
+
 .price {
   font-size: 0.75rem;
   font-weight: 600;
@@ -201,6 +242,11 @@
 .cartBtn:hover {
   border-color: var(--border-active);
   box-shadow: var(--glow-sm);
+}
+
+.cartBtn:focus-visible {
+  outline: 2px solid var(--purple-glow);
+  outline-offset: 2px;
 }
 
 .cartCount {
@@ -242,6 +288,11 @@
   transform: translateY(-1px);
 }
 
+.sellerBtn:focus-visible {
+  outline: 2px solid var(--purple-glow);
+  outline-offset: 2px;
+}
+
 .loginBtn {
   font-family: var(--font-heading);
   font-size: 0.9rem;
@@ -258,4 +309,9 @@
 .loginBtn:hover {
   color: var(--text-primary);
   border-color: var(--border-active);
+}
+
+.loginBtn:focus-visible {
+  outline: 2px solid var(--purple-glow);
+  outline-offset: 2px;
 }

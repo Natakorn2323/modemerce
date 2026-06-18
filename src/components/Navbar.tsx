@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import styles from './Navbar.module.css'
@@ -9,6 +9,8 @@ export default function Navbar() {
   const [bestsellersOpen, setBestsellersOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const router = useRouter()
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const dropButtonRef = useRef<HTMLButtonElement>(null)
 
   // อ่าน user จาก localStorage ครั้งเดียวตอน mount
   useEffect(() => {
@@ -16,10 +18,29 @@ export default function Navbar() {
     if (raw) setUser(JSON.parse(raw))
   }, [])
 
+  // Close dropdown on Escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setBestsellersOpen(false)
+        dropButtonRef.current?.focus()
+      }
+    }
+    if (bestsellersOpen) {
+      document.addEventListener('keydown', handleEscape)
+      return () => document.removeEventListener('keydown', handleEscape)
+    }
+  }, [bestsellersOpen])
+
   function handleLogout() {
     localStorage.removeItem('mv_user')
     setUser(null)
     router.push('/')
+  }
+
+  function toggleDropdown(e?: React.KeyboardEvent | React.MouseEvent) {
+    if (e instanceof KeyboardEvent && e.key !== 'Enter' && e.key !== ' ') return
+    setBestsellersOpen(!bestsellersOpen)
   }
 
   const bestsellers = [
@@ -43,21 +64,29 @@ export default function Navbar() {
         <div className={styles.links}>
           <div
             className={styles.dropdown}
+            ref={dropdownRef}
             onMouseEnter={() => setBestsellersOpen(true)}
             onMouseLeave={() => setBestsellersOpen(false)}
           >
-            <button className={styles.navBtn}>
+            <button
+              ref={dropButtonRef}
+              className={styles.navBtn}
+              onClick={toggleDropdown}
+              onKeyDown={toggleDropdown}
+              aria-haspopup="menu"
+              aria-expanded={bestsellersOpen}
+            >
               <span className={styles.hotBadge}>🔥</span>
               สินค้าขายดี
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
                 <path d="M6 8L1 3h10z" />
               </svg>
             </button>
             {bestsellersOpen && (
-              <div className={styles.dropMenu}>
+              <div className={styles.dropMenu} role="menu">
                 <div className={styles.dropHeader}>Top Mods ประจำสัปดาห์</div>
                 {bestsellers.map((item, i) => (
-                  <Link key={i} href="#" className={styles.dropItem}>
+                  <Link key={i} href="#" className={styles.dropItem} role="menuitem">
                     <span className={styles.dropRank}>#{i + 1}</span>
                     <span className={styles.dropName}>{item.name}</span>
                     <span className={styles.dropMeta}>
@@ -78,23 +107,28 @@ export default function Navbar() {
 
         {/* Right side */}
         <div className={styles.right}>
-          <button className={styles.cartBtn}>
-            🛒 <span className={styles.cartCount}>3</span>
-          </button>
+          
           <Link href="/seller" className={styles.sellerBtn}>
             <span>⚡</span> Login Seller
           </Link>
 
           {user ? (
             <>
-              <span style={{ fontSize: '0.85rem', color: 'var(--purple-bright)' }}>
+              <span className={styles.userDisplay}>
                 👤 {user.displayName}
                 {user.role === 'seller' && (
-                  <span style={{ fontSize: '0.7rem', color: 'var(--purple-glow)', marginLeft: 6 }}>
+                  <span className={styles.sellerBadge}>
                     ⚡ Seller
                   </span>
                 )}
               </span>
+              <div style={{ display:'flex', alignItems:'center',gap:10}}>
+                <Link href="/dashboard" style={{ fontSize:'.82rem',}}>
+                  คำสั่งซื้อ
+                </Link>
+                
+                
+              </div>
               <button className={styles.loginBtn} onClick={handleLogout}>
                 ออกจากระบบ
               </button>
