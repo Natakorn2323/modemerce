@@ -32,6 +32,8 @@ export default function SemiCircleCarousel() {
     const json = await res.json()
     const data = json.mods || []
 
+    console.log('Featured mods:', data) // ← เพิ่มชั่วคราว
+
     if (data.length > 0) {
       setMods(data)
       setActiveIndex(Math.floor(data.length /2))

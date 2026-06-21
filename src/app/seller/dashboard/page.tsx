@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { supabase, getUser } from '@/lib/supabase'
+import { getUser } from '@/lib/supabase'
 
 export default function SellerDashboard() {
   const router = useRouter()
@@ -20,7 +20,7 @@ export default function SellerDashboard() {
     const u = await getUser()
     if (!u) { router.push('/auth/login'); return }
     setUser(u)
-    setLoading(false)
+    fetchAll(u.id)
   }
   init()
   }, [])
@@ -53,19 +53,21 @@ export default function SellerDashboard() {
   async function handleDelete(modId: string) {
     if (!confirm('ลบ Mod นี้ออกจากระบบ?')) return
     setDeleting(modId)
-    await supabase.from('mods').delete().eq('id', modId)
+    await fetch(`/api/seller/mods/${modId}`, { method: 'DELETE' })
     setMods(prev => prev.filter(m => m.id !== modId))
     setStats(prev => ({ ...prev, totalMods: prev.totalMods - 1 }))
     setDeleting(null)
   }
 
   async function togglePublish(mod: any) {
-    await supabase
-      .from('mods')
-      .update({ is_published: !mod.is_published })
-      .eq('id', mod.id)
-    setMods(prev => prev.map(m => m.id === mod.id ? { ...m, is_published: !m.is_published } : m))
-  }
+    await fetch(`/api/seller/mods/${mod.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_published: !mod.is_published }),
+  })
+     setMods(prev => prev.map(m => m.id === mod.id ? { ...m, is_published: !m.is_published } : m)) 
+   }
+
 
   if (loading) return (
     <div style={{ minHeight:'100vh', background:'#06060f', display:'flex', alignItems:'center', justifyContent:'center', color:'#a855f7', fontFamily:'system-ui' }}>
