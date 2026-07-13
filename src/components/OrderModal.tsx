@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { supabase } from '@/lib/supabase'
 
 interface Props {
   mod: any
@@ -12,19 +11,22 @@ interface Props {
 
 export default function OrderModal({ mod, seller, user, onClose }: Props) {
   const [orderId, setOrderId] = useState<string | null>(null)
-  const [status, setStatus] = useState<'idle' | 'creating' | 'waiting' | 'paid' | 'error'>('idle')
+  const [status, setStatus]   = useState<'idle' | 'creating' | 'waiting' | 'paid' | 'error'>('idle')
   const [unlocked, setUnlocked] = useState(false)
+  const [qrImage, setQrImage] = useState<string | null>(null)
+  const [feeInfo, setFeeInfo] = useState<any>(null)
+  const [errorMsg, setErrorMsg] = useState('')
   const pollRef = useRef<NodeJS.Timeout | null>(null)
 
-  // ถ้า mod ฟรี — ปลดล็อคทันที
   useEffect(() => {
     if (mod.is_free) setUnlocked(true)
   }, [])
 
-  // สร้าง Order
   async function createOrder() {
     setStatus('creating')
+    setErrorMsg('')
     try {
+      // 1) สร้าง Order ใน DB
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -36,20 +38,37 @@ export default function OrderModal({ mod, seller, user, onClose }: Props) {
         }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
+      if (!res.ok) throw new Error(data.error || 'สร้างคำสั่งซื้อไม่สำเร็จ')
       setOrderId(data.orderId)
+
+      // 2) สร้าง Omise Charge + PromptPay QR
+      const chargeRes = await fetch('/api/omise/create-charge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: data.orderId,
+          amount:  mod.price,
+          method:  'promptpay',
+        }),
+      })
+      const chargeData = await chargeRes.json()
+      if (!chargeRes.ok) throw new Error(chargeData.error || 'สร้าง QR ไม่สำเร็จ')
+
+      setQrImage(chargeData.qrCodeUri)
+      setFeeInfo(chargeData.fee)
       setStatus('waiting')
       startPolling(data.orderId)
-    } catch {
+
+    } catch (err: any) {
+      setErrorMsg(err.message || 'เกิดข้อผิดพลาด')
       setStatus('error')
     }
   }
 
-  // Polling ทุก 5 วินาที
   function startPolling(oid: string) {
     pollRef.current = setInterval(async () => {
       try {
-        const res = await fetch(`/api/orders/${oid}/poll`)
+        const res  = await fetch(`/api/orders/${oid}/poll`)
         const data = await res.json()
         if (data.status === 'paid') {
           clearInterval(pollRef.current!)
@@ -105,7 +124,7 @@ export default function OrderModal({ mod, seller, user, onClose }: Props) {
             </div>
           </div>
 
-          {/* ── ฟรี: ปลดล็อคทันที ── */}
+          {/* ── ฟรี ── */}
           {mod.is_free && (
             <div style={{ background:'rgba(34,197,94,.08)', border:'1px solid rgba(34,197,94,.3)', borderRadius:12, padding:'16px' }}>
               <div style={{ fontSize:'.88rem', fontWeight:700, color:'#22c55e', marginBottom:8 }}>✅ Mod ฟรี — ดาวน์โหลดได้เลย!</div>
@@ -114,7 +133,6 @@ export default function OrderModal({ mod, seller, user, onClose }: Props) {
                   display:'inline-block', fontSize:'.88rem', fontWeight:700,
                   color:'#fff', background:'linear-gradient(135deg,#16a34a,#22c55e)',
                   textDecoration:'none', padding:'10px 24px', borderRadius:8,
-                  boxShadow:'0 0 16px rgba(34,197,94,.3)',
                 }}>
                   ⬇️ ดาวน์โหลด Mod
                 </a>
@@ -162,19 +180,17 @@ export default function OrderModal({ mod, seller, user, onClose }: Props) {
                   </a>
                 ) : (
                   <div style={{ filter:'blur(4px)', fontSize:'.85rem', color:'#9ca3af' }}>
-                    mod_file_v1.0.zip — 45.2 MB
+                    mod_file_v1.0.zip
                   </div>
                 )}
                 {!unlocked && (
                   <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(6,6,15,.5)' }}>
-                    <div style={{ textAlign:'center' }}>
-                      <div style={{ fontSize:'1.4rem', marginBottom:6 }}>🔒</div>
-                    </div>
+                    <div style={{ fontSize:'1.4rem' }}>🔒</div>
                   </div>
                 )}
               </div>
 
-              {/* Payment section */}
+              {/* Payment */}
               {status === 'idle' && (
                 <button onClick={createOrder} style={{
                   width:'100%', fontSize:'.95rem', fontWeight:700,
@@ -182,54 +198,54 @@ export default function OrderModal({ mod, seller, user, onClose }: Props) {
                   border:'none', padding:'13px', borderRadius:10, cursor:'pointer',
                   boxShadow:'0 0 20px rgba(168,85,247,.35)',
                 }}>
-                  💳 ดำเนินการชำระเงิน
+                  💳 ดำเนินการชำระเงิน (PromptPay)
                 </button>
               )}
 
               {status === 'creating' && (
                 <div style={{ textAlign:'center', padding:'20px', color:'#a855f7', fontSize:'.88rem' }}>
-                  ⏳ กำลังสร้างคำสั่งซื้อ...
+                  ⏳ กำลังสร้าง QR Code...
                 </div>
               )}
 
-              {status === 'waiting' && seller && (
+              {status === 'waiting' && (
                 <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
                   <div style={{ background:'rgba(124,58,237,.06)', border:'1px solid rgba(124,58,237,.2)', borderRadius:12, padding:'16px', textAlign:'center' }}>
                     <div style={{ fontSize:'.82rem', fontWeight:700, color:'#c084fc', marginBottom:12 }}>
-                      💳 โอนเงิน ฿{mod.price} ไปที่
+                      💳 สแกน QR เพื่อชำระเงิน ฿{mod.price}
                     </div>
 
-                    {/* QR Code */}
-                    {seller.qr_code_url && (
-                      <div style={{ marginBottom:14 }}>
-                        <img
-                          src={seller.qr_code_url}
-                          alt="QR Payment"
-                          style={{ width:180, height:180, objectFit:'contain', background:'white', borderRadius:12, padding:8, margin:'0 auto', display:'block' }}
-                        />
-                        <p style={{ fontSize:'.72rem', color:'#4b5563', marginTop:6 }}>สแกน QR Code เพื่อชำระเงิน</p>
+                    {qrImage ? (
+                      <img
+                        src={qrImage}
+                        alt="PromptPay QR"
+                        style={{ width:200, height:200, margin:'0 auto', display:'block', background:'white', borderRadius:12, padding:8 }}
+                      />
+                    ) : (
+                      <div style={{ width:200, height:200, margin:'0 auto', display:'flex', alignItems:'center', justifyContent:'center', background:'#0d0d1a', borderRadius:12, color:'#4b5563', fontSize:'.8rem' }}>
+                        กำลังโหลด QR...
                       </div>
                     )}
 
-                    {/* Bank Info */}
-                    <div style={{ background:'rgba(13,13,26,.8)', borderRadius:10, padding:'12px 16px', textAlign:'left', display:'flex', flexDirection:'column', gap:6 }}>
-                      <div style={{ display:'flex', justifyContent:'space-between', fontSize:'.82rem' }}>
-                        <span style={{ color:'#4b5563' }}>ธนาคาร</span>
-                        <span style={{ color:'#f1f0ff', fontWeight:600 }}>{seller.bank_name}</span>
+                    {feeInfo && (
+                      <div style={{ background:'rgba(13,13,26,.8)', borderRadius:10, padding:'12px 16px', marginTop:14, textAlign:'left', display:'flex', flexDirection:'column', gap:6 }}>
+                        <div style={{ fontSize:'.72rem', fontWeight:700, color:'#a855f7', marginBottom:4 }}>
+                          💡 รายละเอียดค่าธรรมเนียม ({feeInfo.label})
+                        </div>
+                        <div style={{ display:'flex', justifyContent:'space-between', fontSize:'.78rem' }}>
+                          <span style={{ color:'#4b5563' }}>ยอดชำระ</span>
+                          <span style={{ color:'#f1f0ff' }}>฿{mod.price}</span>
+                        </div>
+                        <div style={{ display:'flex', justifyContent:'space-between', fontSize:'.78rem' }}>
+                          <span style={{ color:'#4b5563' }}>ค่าธรรมเนียม ({feeInfo.ratePercent})</span>
+                          <span style={{ color:'#f87171' }}>-฿{feeInfo.platformFee}</span>
+                        </div>
+                        <div style={{ display:'flex', justifyContent:'space-between', fontSize:'.82rem', fontWeight:700, borderTop:'1px solid rgba(124,58,237,.15)', paddingTop:6 }}>
+                          <span style={{ color:'#9ca3af' }}>Seller ได้รับ</span>
+                          <span style={{ color:'#22c55e' }}>฿{feeInfo.sellerPayout}</span>
+                        </div>
                       </div>
-                      <div style={{ display:'flex', justifyContent:'space-between', fontSize:'.82rem' }}>
-                        <span style={{ color:'#4b5563' }}>เลขบัญชี</span>
-                        <span style={{ color:'#f1f0ff', fontWeight:600, fontFamily:'monospace' }}>{seller.bank_account}</span>
-                      </div>
-                      <div style={{ display:'flex', justifyContent:'space-between', fontSize:'.82rem' }}>
-                        <span style={{ color:'#4b5563' }}>ชื่อบัญชี</span>
-                        <span style={{ color:'#f1f0ff', fontWeight:600 }}>{seller.account_name}</span>
-                      </div>
-                      <div style={{ display:'flex', justifyContent:'space-between', fontSize:'.82rem' }}>
-                        <span style={{ color:'#4b5563' }}>จำนวน</span>
-                        <span style={{ color:'#c084fc', fontWeight:800, fontSize:'1rem' }}>฿{mod.price}</span>
-                      </div>
-                    </div>
+                    )}
 
                     <div style={{ marginTop:12, display:'flex', alignItems:'center', justifyContent:'center', gap:8, fontSize:'.78rem', color:'#9ca3af' }}>
                       <span style={{ display:'inline-block', width:8, height:8, background:'#a855f7', borderRadius:'50%', animation:'pulse 1.5s ease infinite' }} />
@@ -239,18 +255,6 @@ export default function OrderModal({ mod, seller, user, onClose }: Props) {
                       ระบบจะตรวจสอบอัตโนมัติทุก 5 วินาที
                     </p>
                   </div>
-
-                  {/* ปุ่มสำหรับ test (dev เท่านั้น) */}
-                  {process.env.NODE_ENV === 'development' && (
-                    <button
-                      onClick={async () => {
-                        await fetch(`/api/orders/${orderId}/confirm`, { method: 'POST' })
-                      }}
-                      style={{ fontSize:'.75rem', color:'#4b5563', background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.08)', padding:'7px', borderRadius:8, cursor:'pointer' }}
-                    >
-                      🔧 [DEV] จำลองการจ่ายเงิน
-                    </button>
-                  )}
                 </div>
               )}
 
@@ -263,8 +267,15 @@ export default function OrderModal({ mod, seller, user, onClose }: Props) {
               )}
 
               {status === 'error' && (
-                <div style={{ background:'rgba(239,68,68,.08)', border:'1px solid rgba(239,68,68,.3)', borderRadius:12, padding:'14px', textAlign:'center', fontSize:'.85rem', color:'#f87171' }}>
-                  เกิดข้อผิดพลาด กรุณาลองใหม่
+                <div style={{ background:'rgba(239,68,68,.08)', border:'1px solid rgba(239,68,68,.3)', borderRadius:12, padding:'14px', textAlign:'center' }}>
+                  <p style={{ fontSize:'.85rem', color:'#f87171', marginBottom:10 }}>{errorMsg || 'เกิดข้อผิดพลาด กรุณาลองใหม่'}</p>
+                  <button onClick={createOrder} style={{
+                    fontSize:'.82rem', fontWeight:700, color:'#fff',
+                    background:'rgba(239,68,68,.2)', border:'1px solid rgba(239,68,68,.4)',
+                    padding:'8px 20px', borderRadius:8, cursor:'pointer',
+                  }}>
+                    ลองใหม่
+                  </button>
                 </div>
               )}
             </>

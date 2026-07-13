@@ -10,7 +10,7 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params  // ← เพิ่ม await
+  const { id } = await params  // เพิ่ม await
 
   const { data, error } = await supabaseAdmin
     .from('orders')

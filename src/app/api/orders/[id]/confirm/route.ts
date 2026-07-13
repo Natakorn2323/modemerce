@@ -7,15 +7,21 @@ const supabaseAdmin = createClient(
 )
 
 export async function POST(
-  _req: Request,
-  {params}: {params: Promise<{id: string}> }
-){
-  const {id} = await params 
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  // ป้องกันด้วย secret key — เฉพาะ payment gateway จริงเรียกได้
+  const authHeader = req.headers.get('x-webhook-secret')
+  if (authHeader !== process.env.PAYMENT_WEBHOOK_SECRET) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
-  const {data: order,error}= await supabaseAdmin
+  const { id } = await params
+
+  const { data: order, error } = await supabaseAdmin
     .from('orders')
     .update({
-      status: 'paid',
+      status:  'paid',
       paid_at: new Date().toISOString(),
     })
     .eq('id', id)
@@ -25,12 +31,12 @@ export async function POST(
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
   if (order?.mod_id) {
     await supabaseAdmin.rpc('increment_downloads', {
       mod_id: order.mod_id,
-    
     })
- }
+  }
 
   return NextResponse.json({ success: true })
 }

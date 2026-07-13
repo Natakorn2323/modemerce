@@ -83,7 +83,7 @@ export default function SellerDashboard() {
 
   return (
     <div style={{ minHeight:'100vh', background:'#06060f', color:'#f1f0ff', fontFamily:'system-ui' }}>
-
+      
       {/* Top bar */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 28px', background:'rgba(13,13,26,.9)', borderBottom:'1px solid rgba(124,58,237,.2)', position:'sticky', top:0, zIndex:50 }}>
         <Link href="/seller" style={{ fontSize:'.82rem', color:'#9ca3af', textDecoration:'none' }}>← Seller Portal</Link>
@@ -125,66 +125,73 @@ export default function SellerDashboard() {
 
         {/* ── Orders Tab ── */}
         {tab === 'orders' && (
-          <div style={{ background:'#111124', border:'1px solid rgba(124,58,237,.18)', borderRadius:14, overflow:'hidden' }}>
-            <div style={{ padding:'16px 20px', borderBottom:'1px solid rgba(124,58,237,.12)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-              <h2 style={{ fontSize:'.95rem', fontWeight:800 }}>ออเดอร์ทั้งหมด</h2>
-              <span style={{ fontSize:'.75rem', color:'#4b5563' }}>{orders.length} รายการ</span>
-            </div>
-
-            {orders.length === 0 ? (
-              <div style={{ textAlign:'center', padding:'48px', color:'#4b5563', fontSize:'.88rem' }}>
-                ยังไม่มีออเดอร์
-              </div>
-            ) : (
-              <div style={{ overflowX:'auto' }}>
-                <table style={{ width:'100%', borderCollapse:'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom:'1px solid rgba(124,58,237,.12)' }}>
-                      {['Mod', 'Buyer', 'จำนวน', 'สถานะ', 'วันที่'].map(h => (
-                        <th key={h} style={{ padding:'10px 16px', textAlign:'left', fontSize:'.72rem', fontWeight:700, color:'#4b5563', letterSpacing:'.06em', textTransform:'uppercase' }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orders.map((o, i) => (
-                      <tr key={o.id} style={{ borderBottom: i < orders.length-1 ? '1px solid rgba(124,58,237,.07)' : 'none' }}>
-                        <td style={{ padding:'12px 16px' }}>
-                          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                            <div style={{ width:36, height:36, borderRadius:6, background:'linear-gradient(135deg,#0d0d1a,#2d1458)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1rem', flexShrink:0, overflow:'hidden' }}>
-                              {o.mods?.thumbnail_url
-                                ? <img src={o.mods.thumbnail_url} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-                                : '🎮'}
-                            </div>
-                            <span style={{ fontSize:'.82rem', fontWeight:600, color:'#f1f0ff' }}>{o.mods?.title || '-'}</span>
-                          </div>
-                        </td>
-                        <td style={{ padding:'12px 16px', fontSize:'.82rem', color:'#9ca3af' }}>
-                          {o.profiles?.display_name || '-'}
-                        </td>
-                        <td style={{ padding:'12px 16px', fontSize:'.88rem', fontWeight:700, color:'#c084fc', fontFamily:'monospace' }}>
-                          ฿{Number(o.amount).toLocaleString()}
-                        </td>
-                        <td style={{ padding:'12px 16px' }}>
-                          <span style={{
-                            fontSize:'.72rem', fontWeight:700, padding:'3px 10px', borderRadius:99,
-                            background: o.status === 'paid' ? 'rgba(34,197,94,.12)' : 'rgba(245,158,11,.12)',
-                            color: o.status === 'paid' ? '#22c55e' : '#f59e0b',
-                            border: `1px solid ${o.status === 'paid' ? 'rgba(34,197,94,.3)' : 'rgba(245,158,11,.3)'}`,
-                          }}>
-                            {o.status === 'paid' ? '✅ สำเร็จ' : '⏳ รอชำระ'}
-                          </span>
-                        </td>
-                        <td style={{ padding:'12px 16px', fontSize:'.78rem', color:'#4b5563' }}>
-                          {new Date(o.created_at).toLocaleDateString('th-TH')}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+        <div style={{ background:'#111124', border:'1px solid rgba(124,58,237,.18)', borderRadius:14, overflow:'hidden' }}>
+          <div style={{ padding:'16px 20px', borderBottom:'1px solid rgba(124,58,237,.12)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <h2 style={{ fontSize:'.95rem', fontWeight:800 }}>ออเดอร์ทั้งหมด</h2>
+            <span style={{ fontSize:'.75rem', color:'#4b5563' }}>{orders.length} รายการ</span>
           </div>
-        )}
+
+          {orders.length === 0 ? (
+            <div style={{ textAlign:'center', padding:'48px', color:'#4b5563', fontSize:'.88rem' }}>
+              ยังไม่มีออเดอร์
+            </div>
+          ) : (
+            <div style={{ overflowX:'auto' }}>
+              <table style={{ width:'100%', borderCollapse:'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom:'1px solid rgba(124,58,237,.12)' }}>
+                    {['Mod', 'Buyer', 'ยอดขาย', 'ค่าธรรมเนียม', 'ที่ได้รับจริง', 'สถานะ', 'วันที่'].map(h => (
+                      <th key={h} style={{ padding:'10px 16px', textAlign:'left', fontSize:'.72rem', fontWeight:700, color:'#4b5563', letterSpacing:'.06em', textTransform:'uppercase' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((o, i) => (
+                    <tr key={o.id} style={{ borderBottom: i < orders.length-1 ? '1px solid rgba(124,58,237,.07)' : 'none' }}>
+                      <td style={{ padding:'12px 16px' }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                          <div style={{ width:36, height:36, borderRadius:6, background:'linear-gradient(135deg,#0d0d1a,#2d1458)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1rem', flexShrink:0, overflow:'hidden' }}>
+                            {o.mods?.thumbnail_url
+                              ? <img src={o.mods.thumbnail_url} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                              : '🎮'}
+                          </div>
+                          <span style={{ fontSize:'.82rem', fontWeight:600, color:'#f1f0ff' }}>{o.mods?.title || '-'}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding:'12px 16px', fontSize:'.82rem', color:'#9ca3af' }}>
+                        {o.profiles?.display_name || '-'}
+                      </td>
+                      <td style={{ padding:'12px 16px', fontSize:'.88rem', fontWeight:700, color:'#c084fc', fontFamily:'monospace' }}>
+                        ฿{Number(o.amount).toLocaleString()}
+                      </td>
+                      <td style={{ padding:'12px 16px', fontSize:'.82rem', color:'#f87171' }}>
+                        -฿{Number(o.platform_fee || 0).toLocaleString()}
+                      </td>
+                      <td style={{ padding:'12px 16px', fontSize:'.88rem', fontWeight:700, color:'#22c55e' }}>
+                        ฿{Number(o.seller_payout || o.amount).toLocaleString()}
+                      </td>
+                      <td style={{ padding:'12px 16px' }}>
+                        <span style={{
+                          fontSize:'.72rem', fontWeight:700, padding:'3px 10px', borderRadius:99,
+                          background: o.status === 'paid' ? 'rgba(34,197,94,.12)' : 'rgba(245,158,11,.12)',
+                          color: o.status === 'paid' ? '#22c55e' : '#f59e0b',
+                          border: `1px solid ${o.status === 'paid' ? 'rgba(34,197,94,.3)' : 'rgba(245,158,11,.3)'}`,
+                        }}>
+                          {o.status === 'paid' ? '✅ สำเร็จ' : '⏳ รอชำระ'}
+                        </span>
+                      </td>
+                      <td style={{ padding:'12px 16px', fontSize:'.78rem', color:'#4b5563' }}>
+                        {new Date(o.created_at).toLocaleDateString('th-TH')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+    
 
         {/* ── Mods Tab ── */}
         {tab === 'mods' && (

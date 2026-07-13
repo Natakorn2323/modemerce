@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+
 import OrderModal from '@/components/OrderModal'
 
 export default function ModDetailPage() {
@@ -22,23 +22,13 @@ export default function ModDetailPage() {
   }, [])
 
   async function fetchMod() {
-    const { data } = await supabase
-      .from('mods')
-      .select('*, profiles(display_name)')
-      .eq('id', id)
-      .single()
+    const res = await fetch(`/api/mods/${id}`)
+    const json = await res.json()
 
-    if (!data) { router.push('/'); return }
-    setMod(data)
+    if (!json.mod) { router.push('/'); return}
 
-    // ดึง seller bank info
-    const { data: sellerData } = await supabase
-      .from('seller_profiles')
-      .select('bank_name, bank_account, account_name, qr_code_url')
-      .eq('id', data.seller_id)
-      .single()
-
-    setSeller(sellerData)
+    setMod(json.mod)
+    setSeller(json.seller)
     setLoading(false)
   }
 

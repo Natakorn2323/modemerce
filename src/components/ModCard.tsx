@@ -16,7 +16,7 @@ export default function ModCard({
   id, title, game, category, price, downloads, seller, thumbnailUrl
 }: ModCardProps) {
   return (
-    <div className={styles.card}>
+    <Link href={`/mods/${id}`} className={styles.card} style={{ textDecoration: 'none' }}>
       <div className={styles.thumb}>
         {thumbnailUrl ? (
           <img src={thumbnailUrl} alt={title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -37,11 +37,11 @@ export default function ModCard({
           <span className={price === 'Free' ? styles.free : styles.price}>
             {price}
           </span>
-          <Link href={`/mods/${id}`} className={styles.cartBtn}>
+          <span className={styles.cartBtn}>
             {price === 'Free' ? '⬇️ ดาวน์โหลด' : '🛒 ซื้อ'}
-          </Link>
+          </span>
         </div>
       </div>
-    </div>
+    </Link>
   )
 }
