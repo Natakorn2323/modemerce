@@ -18,9 +18,24 @@ export default function OrderModal({ mod, seller, user, onClose }: Props) {
   const [errorMsg, setErrorMsg] = useState('')
   const pollRef = useRef<NodeJS.Timeout | null>(null)
 
-  useEffect(() => {
-    if (mod.is_free) setUnlocked(true)
-  }, [])
+  // ✅ ใหม่
+useEffect(() => {
+  if (mod.is_free) {
+    setUnlocked(true)
+    return
+  }
+
+  async function checkPaid() {
+    if (!user) return
+    const res  = await fetch(`/api/orders/check?modId=${mod.id}&buyerId=${user.id}`)
+    const data = await res.json()
+    if (data.paid) {
+      setUnlocked(true)
+      setStatus('paid')
+    }
+  }
+  checkPaid()
+}, [])
 
   async function createOrder() {
     setStatus('creating')
