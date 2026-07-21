@@ -14,8 +14,8 @@ export default function NewModPage() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  const [thumbFile, setThumbFile] = useState<File | null>(null)
-  const [thumbPreview, setThumbPreview] = useState<string | null>(null)
+  const [thumbFiles, setThumbFiles] = useState<File[]>([])
+  const [thumbPreviews, setThumbPreviews] = useState<string[]>([])
   const [modFile, setModFile] = useState<File | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [form, setForm] = useState({
@@ -64,59 +64,68 @@ export default function NewModPage() {
     setStep(s => s + 1)
   }
 
-  async function handleSubmit() {
-   const e = validateStep()
-   if (Object.keys(e).length) { setErrors(e); return }
-   setErrors({})
-   setSubmitting(true)
+ async function handleSubmit() {
+  const e = validateStep()
+  if (Object.keys(e).length) { setErrors(e); return }
+  setErrors({})
+  setSubmitting(true)
 
-   try {
-    let thumbUrl  = null
-    let modFileUrl = null
+ try {
+    // ✅ เปลี่ยนจาก thumbFile เป็น thumbFiles (หลายรูป)
+    const thumbUrls: string[] = []
     const gameName = form.game === 'อื่นๆ' ? form.customGame : form.game
 
-    // Upload Thumbnail
-    if (thumbFile) {
-      const fd = new FormData()
-      fd.append('file',   thumbFile)
-      fd.append('userId', user.id)
-      fd.append('bucket', 'mod-thumbnails')
+    // Upload Thumbnails ทั้งหมด
+    for (const file of thumbFiles) {
+      const ext  = file.name.split('.').pop()
+      const path = `${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
 
-      const res  = await fetch('/api/seller/upload-mod', { method:'POST', body:fd })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
-      thumbUrl = data.url
+      const { error } = await supabase.storage
+        .from('mod-thumbnails')
+        .upload(path, file, { upsert: true })
+
+      if (!error) {
+        const { data: urlData } = supabase.storage
+          .from('mod-thumbnails')
+          .getPublicUrl(path)
+        thumbUrls.push(urlData.publicUrl)
+      }
     }
 
-    // Upload Mod File
+    // Upload Mod File ตรงไป Supabase Storage
+    let modFileUrl = null
     if (modFile) {
-      const fd = new FormData()
-      fd.append('file',   modFile)
-      fd.append('userId', user.id)
-      fd.append('bucket', 'mod-files')
+      const path = `${user.id}/${Date.now()}_${modFile.name}`
 
-      const res  = await fetch('/api/seller/upload-mod', { method:'POST', body:fd })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
-      modFileUrl = data.url
+      const { error } = await supabase.storage
+        .from('mod-files')
+        .upload(path, modFile, { upsert: true })
+
+      if (!error) {
+        const { data: urlData } = supabase.storage
+          .from('mod-files')
+          .getPublicUrl(path)
+        modFileUrl = urlData.publicUrl
+      }
     }
 
-    // บันทึก mod
+    // บันทึก mod ผ่าน API
     const res = await fetch('/api/seller/create-mod', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        sellerId:     user.id,
-        title:        form.title,
-        game:         gameName,
-        category:     form.category,
-        price:        form.price,
-        isFree:       form.isFree,
-        description:  form.fullDesc,
-        installGuide: form.installGuide,
-        requirements: form.requirements,
-        tags:         form.tags.split(',').map((t: string) => t.trim()).filter(Boolean),
-        thumbnailUrl: thumbUrl,
+        sellerId:      user.id,
+        title:         form.title,
+        game:          gameName,
+        category:      form.category,
+        price:         form.price,
+        isFree:        form.isFree,
+        description:   form.fullDesc,
+        installGuide:  form.installGuide,
+        requirements:  form.requirements,
+        tags:          form.tags.split(',').map((t: string) => t.trim()).filter(Boolean),
+        thumbnailUrl:  thumbUrls[0] || null,   // ← รูปแรก = หลัก
+        thumbnailUrls: thumbUrls,              // ← ทุกรูป
         modFileUrl,
       }),
     })
@@ -126,7 +135,7 @@ export default function NewModPage() {
 
     router.push('/seller?published=1')
 
-   } catch (err: any) {
+  } catch (err: any) {
     setErrors({ general: err.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่' })
     setSubmitting(false)
   }
@@ -307,27 +316,70 @@ export default function NewModPage() {
                 <textarea style={{ ...inp, minHeight:90, resize:'vertical', lineHeight:1.6 }} placeholder={'OS: Windows 10/11\nRAM: 16GB\nGPU: GTX 1080'} value={form.requirements} onChange={e => up('requirements', e.target.value)} />
               </div>
 
-              {/* Thumbnail */}
+              {/* Thumbnail — Multiple */}
               <div>
-                <label style={lab}>รูปภาพ / Thumbnail</label>
-                {thumbPreview && (
-                  <img src={thumbPreview} alt="preview" style={{ width:'100%', maxHeight:200, objectFit:'cover', borderRadius:8, marginBottom:8 }} />
+                <label style={lab}>รูปภาพ / Thumbnails (ได้สูงสุด 5 รูป)</label>
+
+                {/* Preview grid */}
+                {thumbPreviews.length > 0 && (
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(120px,1fr))', gap:8, marginBottom:10 }}>
+                    {thumbPreviews.map((preview, i) => (
+                      <div key={i} style={{ position:'relative', borderRadius:8, overflow:'hidden', aspectRatio:'16/9' }}>
+                        <img src={preview} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setThumbFiles(prev => prev.filter((_, idx) => idx !== i))
+                            setThumbPreviews(prev => prev.filter((_, idx) => idx !== i))
+                          }}
+                          style={{
+                            position:'absolute', top:4, right:4,
+                            width:22, height:22, borderRadius:'50%',
+                            background:'rgba(239,68,68,.8)', border:'none',
+                            color:'#fff', fontSize:'.7rem', cursor:'pointer',
+                            display:'flex', alignItems:'center', justifyContent:'center',
+                          }}
+                        >
+                          ✕
+                        </button>
+                        {i === 0 && (
+                          <span style={{ position:'absolute', bottom:4, left:4, fontSize:'.6rem', fontWeight:700, color:'#fff', background:'rgba(124,58,237,.8)', padding:'2px 6px', borderRadius:3 }}>
+                            หลัก
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 )}
-                <label style={{
-                  display:'flex', flexDirection:'column', alignItems:'center', gap:8,
-                  background:'rgba(124,58,237,.04)', border:'2px dashed rgba(124,58,237,.25)',
-                  borderRadius:10, padding:'20px 16px', cursor:'pointer', textAlign:'center',
-                }}>
-                  <span style={{ fontSize:'1.6rem' }}>📸</span>
-                  <span style={{ fontSize:'.82rem', color:'#9ca3af', fontWeight:600 }}>
-                    {thumbFile ? thumbFile.name : 'คลิกเพื่อเลือกรูป Thumbnail'}
-                  </span>
-                  <span style={{ fontSize:'.72rem', color:'#4b5563' }}>PNG, JPG สูงสุด 5MB · แนะนำ 1280×720px</span>
-                  <input type="file" accept="image/*" style={{ display:'none' }} onChange={e => {
-                    const f = e.target.files?.[0]
-                    if (f) { setThumbFile(f); setThumbPreview(URL.createObjectURL(f)) }
-                  }} />
-                </label>
+
+                {/* Upload zone */}
+                {thumbPreviews.length < 5 && (
+                  <label style={{
+                    display:'flex', flexDirection:'column', alignItems:'center', gap:8,
+                    background:'rgba(124,58,237,.04)', border:'2px dashed rgba(124,58,237,.25)',
+                    borderRadius:10, padding:'20px 16px', cursor:'pointer', textAlign:'center',
+                  }}>
+                    <span style={{ fontSize:'1.6rem' }}>📸</span>
+                    <span style={{ fontSize:'.82rem', color:'#9ca3af', fontWeight:600 }}>
+                      คลิกเพื่อเพิ่มรูป ({thumbPreviews.length}/5)
+                    </span>
+                    <span style={{ fontSize:'.72rem', color:'#4b5563' }}>PNG, JPG สูงสุด 5MB ต่อรูป</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      style={{ display:'none' }}
+                      onChange={e => {
+                        const files = Array.from(e.target.files || [])
+                        const remaining = 5 - thumbFiles.length
+                        const newFiles = files.slice(0, remaining)
+                        setThumbFiles(prev => [...prev, ...newFiles])
+                        setThumbPreviews(prev => [...prev, ...newFiles.map(f => URL.createObjectURL(f))])
+                      }}
+                    />
+                  </label>
+                )}
+                <span style={{ fontSize:'.72rem', color:'#4b5563' }}>รูปแรกจะเป็น Thumbnail หลักที่แสดงใน Card</span>
               </div>
             </>}
 
@@ -390,8 +442,8 @@ export default function NewModPage() {
                   👁 PREVIEW CARD
                 </div>
                 <div style={{ display:'flex', gap:12, padding:14 }}>
-                  {thumbPreview
-                    ? <img src={thumbPreview} style={{ width:64, height:64, objectFit:'cover', borderRadius:8, flexShrink:0 }} />
+                  {thumbPreviews[0]
+                    ? <img src={thumbPreviews[0]} style={{ width:64, height:64, objectFit:'cover', borderRadius:8, flexShrink:0 }} />
                     : <div style={{ width:64, height:64, background:'linear-gradient(135deg,#111124,#2d1458)', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.5rem', flexShrink:0 }}>🎮</div>
                   }
                   <div>

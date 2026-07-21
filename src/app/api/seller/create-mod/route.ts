@@ -33,6 +33,7 @@ export async function POST(req: Request) {
         requirements,
         tags:          tags || [],
         thumbnail_url: thumbnailUrl || null,
+        thumbnail_urls: thumbnailUrl ? [thumbnailUrl] : [],
         mod_file_url:  modFileUrl || null,
         is_published:  true,
         downloads:     0,

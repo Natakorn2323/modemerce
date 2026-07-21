@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 
+
 import OrderModal from '@/components/OrderModal'
 
 export default function ModDetailPage() {
@@ -14,12 +15,27 @@ export default function ModDetailPage() {
   const [loading, setLoading] = useState(true)
   const [showOrder, setShowOrder] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const [selectedImg, setSelectedImg] = useState(0)
 
-  useEffect(() => {
-    const raw = localStorage.getItem('mv_user')
-    if (raw) setUser(JSON.parse(raw))
+  const [isPaid, setIsPaid] = useState(false)
+
+  // แก้ useEffect เพิ่ม checkPaid
+useEffect(() => {
+  const raw = localStorage.getItem('mv_user')
+  if (raw) {
+    const u = JSON.parse(raw)
+    setUser(u)
+    fetchMod().then(() => checkPaid(u.id))
+  } else {
     fetchMod()
-  }, [])
+  }
+}, [])
+
+async function checkPaid(userId: string) {
+  const res  = await fetch(`/api/orders/check?modId=${id}&buyerId=${userId}`)
+  const data = await res.json()
+  if (data.paid) setIsPaid(true)
+}
 
   async function fetchMod() {
     const res = await fetch(`/api/mods/${id}`)
@@ -54,6 +70,28 @@ export default function ModDetailPage() {
           ? <span style={{ fontSize:'.82rem', color:'#a855f7' }}>👤 {user.displayName}</span>
           : <Link href="/auth/login" style={{ fontSize:'.82rem', color:'#c084fc', textDecoration:'none' }}>Sign In</Link>
         }
+      </div>
+      {/* Install Guide */}
+      <div style={{ background:'#111124', border:'1px solid rgba(124,58,237,.18)', borderRadius:14, padding:'20px 22px', position:'relative', overflow:'hidden' }}>
+        <h2 style={{ fontSize:'.88rem', fontWeight:700, color:'#a855f7', marginBottom:12, letterSpacing:'.06em', textTransform:'uppercase' }}>
+          📋 วิธีการติดตั้ง
+        </h2>
+        <pre style={{
+          fontSize:'.85rem', color:'#9ca3af', lineHeight:1.8,
+          whiteSpace:'pre-wrap', fontFamily:'system-ui',
+          filter: (mod.is_free || isPaid) ? 'none' : 'blur(6px)',
+          userSelect: (mod.is_free || isPaid) ? 'auto' : 'none',
+        }}>
+          {mod.install_guide}
+        </pre>
+        {!mod.is_free && !isPaid && (
+          <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(6,6,15,.6)', backdropFilter:'blur(2px)' }}>
+            <div style={{ textAlign:'center' }}>
+              <div style={{ fontSize:'1.5rem', marginBottom:8 }}>🔒</div>
+              <p style={{ fontSize:'.85rem', fontWeight:700, color:'#c084fc' }}>ซื้อ Mod เพื่อดูวิธีติดตั้ง</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div style={{ maxWidth:960, margin:'0 auto', padding:'36px 24px', display:'grid', gridTemplateColumns:'1fr 360px', gap:32, alignItems:'start' }}>
@@ -92,8 +130,8 @@ export default function ModDetailPage() {
             </div>
           )}
 
-          {/* Install Guide — เบลอถ้าไม่ได้ซื้อ */}
-          <div style={{ background:'#111124', border:'1px solid rgba(124,58,237,.18)', borderRadius:14, padding:'20px 22px', position:'relative', overflow:'hidden' }}>
+         {/* Install Guide — เบลอถ้าไม่ได้ซื้อ */}
+          {/*<div style={{ background:'#111124', border:'1px solid rgba(124,58,237,.18)', borderRadius:14, padding:'20px 22px', position:'relative', overflow:'hidden' }}>
             <h2 style={{ fontSize:'.88rem', fontWeight:700, color:'#a855f7', marginBottom:12, letterSpacing:'.06em', textTransform:'uppercase' }}>
               📋 วิธีการติดตั้ง
             </h2>
@@ -110,7 +148,7 @@ export default function ModDetailPage() {
                 </div>
               </div>
             )}
-          </div>
+          </div>*/}
 
         </div>
 
@@ -137,21 +175,79 @@ export default function ModDetailPage() {
                   {mod.is_free ? 'Free' : `฿${mod.price}`}
                 </span>
               </div>
-
               {/* Buy Button */}
-              <button onClick={handleBuy} style={{
-                width:'100%', fontSize:'.95rem', fontWeight:700,
-                color:'#fff', border:'none', padding:'13px',
-                borderRadius:10, cursor:'pointer',
-                background: mod.is_free
-                  ? 'linear-gradient(135deg,#16a34a,#22c55e)'
-                  : 'linear-gradient(135deg,#7c3aed,#a855f7)',
-                boxShadow: mod.is_free
-                  ? '0 0 20px rgba(34,197,94,.3)'
-                  : '0 0 20px rgba(168,85,247,.35)',
-              }}>
-                {mod.is_free ? '⬇️ ดาวน์โหลดฟรี' : '🛒 ซื้อ Mod นี้'}
-              </button>
+              {isPaid ? (
+                <div style={{
+                  background:'rgba(34,197,94,.08)',
+                  border:'1px solid rgba(34,197,94,.3)',
+                  borderRadius:10, padding:'14px',
+                  textAlign:'center',
+                }}>
+                  <div style={{ fontSize:'1rem', fontWeight:700, color:'#22c55e', marginBottom:8 }}>
+                    ✅ คุณได้ซื้อ Mod นี้แล้ว
+                  </div>
+                  {mod.mod_file_url && (
+                    <a href={mod.mod_file_url} download style={{
+                      display:'inline-block', fontSize:'.88rem', fontWeight:700,
+                      color:'#fff', background:'linear-gradient(135deg,#16a34a,#22c55e)',
+                      textDecoration:'none', padding:'10px 24px', borderRadius:8,
+                    }}>
+                      ⬇️ ดาวน์โหลดไฟล์ Mod
+                    </a>
+                  )}
+                </div>
+              ) : (
+                <button onClick={handleBuy} style={{
+                  width:'100%', fontSize:'.95rem', fontWeight:700,
+                  color:'#fff', border:'none', padding:'13px',
+                  borderRadius:10, cursor:'pointer',
+                  background: mod.is_free
+                    ? 'linear-gradient(135deg,#16a34a,#22c55e)'
+                    : 'linear-gradient(135deg,#7c3aed,#a855f7)',
+                  boxShadow: mod.is_free
+                    ? '0 0 20px rgba(34,197,94,.3)'
+                    : '0 0 20px rgba(168,85,247,.35)',
+                }}>
+                  {mod.is_free ? '⬇️ ดาวน์โหลดฟรี' : '🛒 ซื้อ Mod นี้'}
+                </button>
+              )}
+              {/* Image Gallery */}
+              {mod.thumbnail_urls?.length > 1 ? (
+                <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                  {/* Main image */}
+                  <div style={{ borderRadius:16, overflow:'hidden', background:'linear-gradient(135deg,#0d0d1a,#2d1458)', aspectRatio:'16/9' }}>
+                    <img
+                      src={mod.thumbnail_urls[selectedImg ?? 0]}
+                      alt={mod.title}
+                      style={{ width:'100%', height:'100%', objectFit:'cover' }}
+                    />
+                  </div>
+                  {/* Thumbnails row */}
+                  <div style={{ display:'flex', gap:8, overflowX:'auto' }}>
+                    {mod.thumbnail_urls.map((url: string, i: number) => (
+                      <div
+                        key={i}
+                        onClick={() => setSelectedImg(i)}
+                        style={{
+                          width:80, height:50, borderRadius:8, overflow:'hidden', flexShrink:0,
+                          cursor:'pointer', border:`2px solid ${selectedImg === i ? 'rgba(168,85,247,.8)' : 'transparent'}`,
+                          opacity: selectedImg === i ? 1 : 0.6, transition:'all .2s',
+                        }}
+                      >
+                        <img src={url} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ borderRadius:16, overflow:'hidden', background:'linear-gradient(135deg,#0d0d1a,#2d1458)', aspectRatio:'16/9', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  {mod.thumbnail_url
+                    ? <img src={mod.thumbnail_url} alt={mod.title} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                    : <span style={{ fontSize:'6rem' }}>🎮</span>
+                  }
+                </div>
+              )}
+
 
               <div style={{ fontSize:'.72rem', color:'#4b5563', textAlign:'center', lineHeight:1.5 }}>
                 🔒 ปลอดภัย · ได้รับไฟล์ทันทีหลังชำระเงิน
