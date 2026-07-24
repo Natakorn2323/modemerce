@@ -10,6 +10,7 @@ export default function UserDashboard() {
   const [orders, setOrders] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'all' | 'paid' | 'pending'>('all')
+  const [cancelling, setCancelling] = useState<string | null>(null)
 
   useEffect(() => {
     const raw = localStorage.getItem('mv_user')
@@ -42,6 +43,19 @@ export default function UserDashboard() {
       กำลังโหลด...
     </div>
   )
+  async function handleCancel(orderId: string) {
+  if (!confirm('ยกเลิก Order นี้?')) return
+  setCancelling(orderId)
+
+  const res = await fetch(`/api/orders/${orderId}/cancel`, {
+    method: 'DELETE',
+  })
+
+  if (res.ok) {
+    setOrders(prev => prev.filter(o => o.id !== orderId))
+  }
+  setCancelling(null)
+}
 
   return (
     <div style={{ minHeight:'100vh', background:'#06060f', color:'#f1f0ff', fontFamily:'system-ui' }}>
@@ -164,10 +178,33 @@ export default function UserDashboard() {
                     </Link>
                   )}
 
+                 
                   {order.status === 'pending' && (
-                    <Link href={`/mods/${order.mod_id}`} style={{ fontSize:'.75rem', fontWeight:700, color:'#f59e0b', background:'rgba(245,158,11,.08)', border:'1px solid rgba(245,158,11,.3)', padding:'7px 14px', borderRadius:8, textDecoration:'none', flexShrink:0, whiteSpace:'nowrap' }}>
-                      ชำระเงิน →
-                    </Link>
+                    <div style={{ display:'flex', gap:8, flexShrink:0 }}>
+                      <Link href={`/mods/${order.mod_id}`} style={{
+                        fontSize:'.75rem', fontWeight:700, color:'#f59e0b',
+                        background:'rgba(245,158,11,.08)', border:'1px solid rgba(245,158,11,.3)',
+                        padding:'7px 14px', borderRadius:8, textDecoration:'none', whiteSpace:'nowrap',
+                      }}>
+                        ชำระเงิน →
+                      </Link>
+                      <button
+                        onClick={() => handleCancel(order.id)}
+                        disabled={cancelling === order.id}
+                        style={{
+                          fontSize:'.75rem', fontWeight:700,
+                          color:'#f87171',
+                          background:'rgba(239,68,68,.08)',
+                          border:'1px solid rgba(239,68,68,.3)',
+                          padding:'7px 14px', borderRadius:8,
+                          cursor: cancelling === order.id ? 'not-allowed' : 'pointer',
+                          opacity: cancelling === order.id ? .5 : 1,
+                          whiteSpace:'nowrap',
+                        }}
+                      >
+                        {cancelling === order.id ? '...' : '✕ ยกเลิก'}
+                      </button>
+                    </div>
                   )}
 
                 </div>
