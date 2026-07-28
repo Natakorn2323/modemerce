@@ -15,13 +15,24 @@ export async function GET(req: Request) {
     return NextResponse.json({ paid: false })
   }
 
-  const { data } = await supabaseAdmin
-    .from('orders')
-    .select('id, status')
-    .eq('mod_id', modId)
-    .eq('buyer_id', buyerId)
-    .eq('status', 'paid')
-    .single()
+  const { data: paidOrder } = await supabaseAdmin
+  .from('orders')
+  .select('id, status')
+  .eq('mod_id', modId)
+  .eq('buyer_id', buyerId)
+  .eq('status', 'paid')
+  .single()
 
-  return NextResponse.json({ paid: !!data })
+const { data: pendingOrder } = await supabaseAdmin
+  .from('orders')
+  .select('id, status')
+  .eq('mod_id', modId)
+  .eq('buyer_id', buyerId)
+  .eq('status', 'pending')
+  .single()
+
+return NextResponse.json({
+  paid:    !!paidOrder,
+  pending: !!pendingOrder,
+})
 }

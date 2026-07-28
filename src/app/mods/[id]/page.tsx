@@ -16,7 +16,7 @@ export default function ModDetailPage() {
   const [showOrder, setShowOrder] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [selectedImg, setSelectedImg] = useState(0)
-
+  const [orderStatus, setOrderStatus] = useState<'none' | 'pending' | 'paid'>('none')
   const [isPaid, setIsPaid] = useState(false)
 
   // แก้ useEffect เพิ่ม checkPaid
@@ -34,10 +34,11 @@ useEffect(() => {
 async function checkPaid(userId: string) {
   const res  = await fetch(`/api/orders/check?modId=${id}&buyerId=${userId}`)
   const data = await res.json()
-  if (data.paid) setIsPaid(true)
+  if (data.paid)    { setIsPaid(true); setOrderStatus('paid') }
+  if (data.pending) { setOrderStatus('pending') }
 }
 
-  async function fetchMod() {
+async function fetchMod() {
     const res = await fetch(`/api/mods/${id}`)
     const json = await res.json()
 
@@ -46,18 +47,18 @@ async function checkPaid(userId: string) {
     setMod(json.mod)
     setSeller(json.seller)
     setLoading(false)
-  }
+}
 
-  function handleBuy() {
+function handleBuy() {
     if (!user) { router.push('/auth/login'); return }
     setShowOrder(true)
-  }
+}
 
-  if (loading) return (
+if (loading) return (
     <div style={{ minHeight:'100vh', background:'#06060f', display:'flex', alignItems:'center', justifyContent:'center', color:'#a855f7', fontFamily:'system-ui' }}>
       กำลังโหลด...
     </div>
-  )
+)
 
   return (
     <div style={{ minHeight:'100vh', background:'#06060f', color:'#f1f0ff', fontFamily:'system-ui' }}>
@@ -182,7 +183,12 @@ async function checkPaid(userId: string) {
                   border:'1px solid rgba(34,197,94,.3)',
                   borderRadius:10, padding:'14px',
                   textAlign:'center',
+                  fontSize:'.95rem', fontWeight:700, color:'#f59e0b',
                 }}>
+                  ⏳ รอการชำระเงิน
+                    <div style={{ fontSize:'.75rem', color:'#4b5563', marginTop:6, fontWeight:400 }}>
+                      ไปที่ <Link href="/dashboard" style={{ color:'#f59e0b' }}>Dashboard</Link> เพื่อชำระเงิน
+                    </div>
                   <div style={{ fontSize:'1rem', fontWeight:700, color:'#22c55e', marginBottom:8 }}>
                     ✅ คุณได้ซื้อ Mod นี้แล้ว
                   </div>

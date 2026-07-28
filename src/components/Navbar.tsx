@@ -101,8 +101,8 @@ export default function Navbar() {
             )}
           </div>
 
-          <Link href="/mods"  className={styles.navLink}>Browse All</Link>
-          <Link href="/games" className={styles.navLink}>Games</Link>
+          <Link href="/mods"  className={styles.navLink}></Link>
+          <Link href="/games" className={styles.navLink}></Link>
         </div>
 
         {/* Right side */}
