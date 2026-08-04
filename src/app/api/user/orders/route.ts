@@ -27,5 +27,11 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ orders: data })
+  // ใช้ snapshot แทนถ้า mod ถูกลบ
+  const result = (data || []).map((order: any) => ({
+    ...order,
+    mods: order.mods || order.mod_snapshot || null,
+  }))
+
+  return NextResponse.json({ orders: result })
 }

@@ -220,7 +220,6 @@ if (loading) return (
               {/* Image Gallery */}
               {mod.thumbnail_urls?.length > 1 ? (
                 <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-                  {/* Main image */}
                   <div style={{ borderRadius:16, overflow:'hidden', background:'linear-gradient(135deg,#0d0d1a,#2d1458)', aspectRatio:'16/9' }}>
                     <img
                       src={mod.thumbnail_urls[selectedImg ?? 0]}
@@ -228,7 +227,6 @@ if (loading) return (
                       style={{ width:'100%', height:'100%', objectFit:'cover' }}
                     />
                   </div>
-                  {/* Thumbnails row */}
                   <div style={{ display:'flex', gap:8, overflowX:'auto' }}>
                     {mod.thumbnail_urls.map((url: string, i: number) => (
                       <div
@@ -236,8 +234,10 @@ if (loading) return (
                         onClick={() => setSelectedImg(i)}
                         style={{
                           width:80, height:50, borderRadius:8, overflow:'hidden', flexShrink:0,
-                          cursor:'pointer', border:`2px solid ${selectedImg === i ? 'rgba(168,85,247,.8)' : 'transparent'}`,
-                          opacity: selectedImg === i ? 1 : 0.6, transition:'all .2s',
+                          cursor:'pointer',
+                          border:`2px solid ${selectedImg === i ? 'rgba(168,85,247,.8)' : 'transparent'}`,
+                          opacity: selectedImg === i ? 1 : 0.6,
+                          transition:'all .2s',
                         }}
                       >
                         <img src={url} style={{ width:'100%', height:'100%', objectFit:'cover' }} />

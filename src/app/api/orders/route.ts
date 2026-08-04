@@ -29,6 +29,12 @@ export async function POST(req: Request) {
         { status: 409 }
       )
     }
+    // หาข้อมูล mod ก่อน insert order
+    const { data: modData } = await supabaseAdmin
+      .from('mods')
+      .select('title, thumbnail_url, game, category')
+      .eq('id', modId)
+      .single()
 
     const { data, error } = await supabaseAdmin
       .from('orders')
@@ -38,6 +44,7 @@ export async function POST(req: Request) {
         buyer_id:  buyerId,
         amount:    amount || 0,
         status:    'pending',
+         mod_snapshot: modData || null, // ← เก็บ snapshot
       })
       .select('id')
       .single()
