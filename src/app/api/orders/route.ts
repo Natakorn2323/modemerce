@@ -29,26 +29,25 @@ export async function POST(req: Request) {
         { status: 409 }
       )
     }
-    // หาข้อมูล mod ก่อน insert order
+    // หาข้อมูล mod ก่อน insert
     const { data: modData } = await supabaseAdmin
       .from('mods')
-      .select('title, thumbnail_url, game, category')
+      .select('title, thumbnail_url, game, category, description, install_guide, mod_file_url')
       .eq('id', modId)
       .single()
 
     const { data, error } = await supabaseAdmin
       .from('orders')
       .insert({
-        mod_id:    modId,
-        seller_id: sellerId,
-        buyer_id:  buyerId,
-        amount:    amount || 0,
-        status:    'pending',
-         mod_snapshot: modData || null, // ← เก็บ snapshot
+        mod_id:       modId,
+        seller_id:    sellerId,
+        buyer_id:     buyerId,
+        amount:       amount || 0,
+        status:       'pending',
+        mod_snapshot: modData || null,
       })
       .select('id')
       .single()
-
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }

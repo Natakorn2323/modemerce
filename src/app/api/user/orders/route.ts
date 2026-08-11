@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   if (!buyerId) {
     return NextResponse.json({ error: 'ไม่มี buyerId' }, { status: 400 })
   }
-
+  
   const { data, error } = await supabaseAdmin
     .from('orders')
     .select(`

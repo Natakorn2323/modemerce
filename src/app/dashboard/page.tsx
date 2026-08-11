@@ -172,8 +172,11 @@ export default function UserDashboard() {
                   </div>
 
                   {/* Action */}
-                  {order.status === 'paid' && (
-                    <Link href={`/mods/${order.mod_id}`} style={{ fontSize:'.75rem', fontWeight:700, color:'#c084fc', background:'rgba(124,58,237,.1)', border:'1px solid rgba(124,58,237,.25)', padding:'7px 14px', borderRadius:8, textDecoration:'none', flexShrink:0, whiteSpace:'nowrap' }}>
+                 {order.status === 'paid' && (
+                    <Link
+                      href={order.mod_id ? `/mods/${order.mod_id}` : `/my-mods/${order.id}`}
+                      style={{ fontSize:'.75rem', fontWeight:700, color:'#c084fc', background:'rgba(124,58,237,.1)', border:'1px solid rgba(124,58,237,.25)', padding:'7px 14px', borderRadius:8, textDecoration:'none', flexShrink:0, whiteSpace:'nowrap' }}
+                    >
                       ดู Mod →
                     </Link>
                   )}
