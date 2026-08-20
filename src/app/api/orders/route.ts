@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       )
     }
     // หาข้อมูล mod ก่อน insert
-    const { data: modData } = await supabaseAdmin
+    const { data: modSnap } = await supabaseAdmin
       .from('mods')
       .select('title, thumbnail_url, game, category, description, install_guide, mod_file_url')
       .eq('id', modId)
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
         buyer_id:     buyerId,
         amount:       amount || 0,
         status:       'pending',
-        mod_snapshot: modData || null,
+        mod_snapshot: modSnap || null,
       })
       .select('id')
       .single()
